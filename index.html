@@ -41,22 +41,39 @@
 
         <div class="panel-section controls">
           <span class="label">CONTROLS</span>
-          <ul>
+          <ul id="controls-list">
             <li><kbd>←</kbd><kbd>→</kbd> mover</li>
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
       </aside>
     </div>
 
     <div id="overlay" class="overlay hidden">
-      <div class="overlay-box">
+      <div class="overlay-box view-gameover" id="gameover-view">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+
+      <div class="overlay-box view-pause" id="pause-menu-view">
+        <p class="overlay-heading">PAUSA</p>
+        <button id="resume-btn" class="menu-btn">Reanudar</button>
+        <button id="restart-pause-btn" class="menu-btn">Reiniciar</button>
+        <button id="controls-btn" class="menu-btn">Ver controles</button>
+        <div class="level-select">
+          <label for="start-level">Nivel inicial</label>
+          <select id="start-level"></select>
+        </div>
+      </div>
+
+      <div class="overlay-box view-controls" id="controls-view">
+        <p class="overlay-heading">CONTROLES</p>
+        <ul id="menu-controls-list"></ul>
+        <button id="back-btn" class="menu-btn">Volver</button>
       </div>
     </div>
   </div>
