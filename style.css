@@ -176,6 +176,135 @@ body {
   transform: translateX(20px);
 }
 
+/* ---- Highscores ---- */
+.highscore-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.highscore-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.highscore-rank {
+  color: var(--label-color);
+  min-width: 14px;
+}
+
+.highscore-name {
+  flex: 1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.highscore-value {
+  color: var(--value-color);
+  font-weight: 700;
+}
+
+.highscore-empty {
+  font-size: 12px;
+  color: var(--label-color);
+  font-style: italic;
+}
+
+.highscore-highlight {
+  background: rgba(122, 162, 247, 0.16);
+  border-color: var(--value-color);
+}
+
+.best-stats {
+  display: flex;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.best-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.best-stat-value {
+  font-size: 18px;
+}
+
+.reset-btn {
+  margin-top: 4px;
+  align-self: flex-start;
+  background: transparent;
+  color: var(--controls-text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.reset-btn:hover {
+  background: var(--kbd-bg);
+  color: var(--text);
+}
+
+.highscore-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.highscore-form.hidden {
+  display: none;
+}
+
+.highscore-form input {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--text);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.highscore-form button {
+  background: var(--restart-bg);
+  color: var(--restart-text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.highscore-form button:hover {
+  background: var(--restart-hover);
+}
+
+.overlay-highscore-list {
+  width: 100%;
+  max-width: 220px;
+}
+
+.overlay-highscore-list.hidden {
+  display: none;
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
