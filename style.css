@@ -177,14 +177,16 @@ body {
 }
 
 /* ---- Controles ---- */
-.controls ul {
+.controls ul,
+.view-controls ul {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.controls li {
+.controls li,
+.view-controls li {
   font-size: 12px;
   color: var(--controls-text);
   display: flex;
@@ -219,15 +221,29 @@ kbd {
 }
 
 .overlay-box {
+  display: none;
   text-align: center;
-  display: flex;
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  min-width: 200px;
+}
+
+#overlay.state-gameover .view-gameover,
+#overlay.state-pause .view-pause,
+#overlay.state-controls .view-controls {
+  display: flex;
 }
 
 #overlay-title {
   font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--overlay-title-color);
+}
+
+.overlay-heading {
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: 4px;
   color: var(--overlay-title-color);
@@ -239,7 +255,8 @@ kbd {
   color: var(--overlay-score-color);
 }
 
-#restart-btn {
+#restart-btn,
+.menu-btn {
   margin-top: 8px;
   background: var(--restart-bg);
   color: var(--restart-text);
@@ -251,8 +268,36 @@ kbd {
   cursor: pointer;
   letter-spacing: 1px;
   transition: background 0.15s;
+  width: 100%;
 }
 
-#restart-btn:hover {
+#restart-btn:hover,
+.menu-btn:hover {
   background: var(--restart-hover);
 }
+
+.level-select {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.level-select label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--label-color);
+  font-weight: 600;
+}
+
+.level-select select {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
