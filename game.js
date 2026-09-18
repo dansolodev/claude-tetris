@@ -42,9 +42,25 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
 const THEME_KEY = 'tetris-theme';
 const themeVars = { gridLine: '#22222e', blockHighlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent' };
+
+const SKIN_KEY = 'tetris-skin';
+const VALID_SKINS = ['retro', 'neon', 'pastel', 'pixel'];
+let currentSkin = 'retro';
+
+function mixWithWhite(hex, ratio) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const mix = v => Math.round(v + (255 - v) * ratio);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+// Softened palette for the Pastel skin: each base color mixed toward white.
+const PASTEL_COLORS = COLORS.map(c => (c ? mixWithWhite(c, 0.45) : null));
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -56,6 +72,15 @@ function applyTheme(theme) {
   themeVars.blockBorder = styles.getPropertyValue('--block-border').trim();
   themeToggle.checked = theme === 'light';
   localStorage.setItem(THEME_KEY, theme);
+}
+
+function applySkin(skin) {
+  if (!VALID_SKINS.includes(skin)) skin = 'retro';
+  currentSkin = skin;
+  VALID_SKINS.forEach(s => document.body.classList.remove(`skin-${s}`));
+  document.body.classList.add(`skin-${skin}`);
+  if (skinSelect) skinSelect.value = skin;
+  localStorage.setItem(SKIN_KEY, skin);
 }
 
 function createBoard() {
@@ -172,10 +197,8 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
-function drawBlock(context, x, y, colorIndex, size, alpha) {
-  if (!colorIndex) return;
+function drawBlockRetro(context, x, y, colorIndex, size) {
   const color = COLORS[colorIndex];
-  context.globalAlpha = alpha ?? 1;
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
@@ -185,6 +208,98 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
     context.strokeStyle = themeVars.blockBorder;
     context.lineWidth = 1;
     context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
+  }
+}
+
+function drawBlockNeon(context, x, y, colorIndex, size) {
+  const color = COLORS[colorIndex];
+  context.save();
+  context.shadowBlur = size * 0.6;
+  context.shadowColor = color;
+  context.fillStyle = color;
+  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  context.restore();
+  // subtle highlight, no glow, to keep block edges legible
+  context.fillStyle = 'rgba(255,255,255,0.18)';
+  context.fillRect(x * size + 1, y * size + 1, size - 2, 3);
+}
+
+function roundedRectPath(context, px, py, w, h, r) {
+  if (typeof context.roundRect === 'function') {
+    context.beginPath();
+    context.roundRect(px, py, w, h, r);
+    return;
+  }
+  // Manual fallback using quadraticCurveTo for browsers without roundRect support.
+  context.beginPath();
+  context.moveTo(px + r, py);
+  context.lineTo(px + w - r, py);
+  context.quadraticCurveTo(px + w, py, px + w, py + r);
+  context.lineTo(px + w, py + h - r);
+  context.quadraticCurveTo(px + w, py + h, px + w - r, py + h);
+  context.lineTo(px + r, py + h);
+  context.quadraticCurveTo(px, py + h, px, py + h - r);
+  context.lineTo(px, py + r);
+  context.quadraticCurveTo(px, py, px + r, py);
+  context.closePath();
+}
+
+function drawBlockPastel(context, x, y, colorIndex, size) {
+  const color = PASTEL_COLORS[colorIndex];
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const w = size - 2;
+  const h = size - 2;
+  const r = Math.min(6, w / 3, h / 3);
+  context.fillStyle = color;
+  roundedRectPath(context, px, py, w, h, r);
+  context.fill();
+  // soft highlight
+  context.fillStyle = 'rgba(255,255,255,0.35)';
+  roundedRectPath(context, px, py, w, h * 0.35, r);
+  context.fill();
+}
+
+function drawBlockPixel(context, x, y, colorIndex, size) {
+  const color = COLORS[colorIndex];
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const w = size - 2;
+  const h = size - 2;
+  context.fillStyle = color;
+  context.fillRect(px, py, w, h);
+  // 4x4 checker texture of alternating darker/lighter cells
+  const cell = w / 4;
+  for (let ty = 0; ty < 4; ty++) {
+    for (let tx = 0; tx < 4; tx++) {
+      const dark = (tx + ty) % 2 === 0;
+      context.fillStyle = dark ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.14)';
+      context.fillRect(px + tx * cell, py + ty * (h / 4), cell, h / 4);
+    }
+  }
+  if (themeVars.blockBorder !== 'transparent') {
+    context.strokeStyle = themeVars.blockBorder;
+    context.lineWidth = 1;
+    context.strokeRect(px + 0.5, py + 0.5, w - 1, h - 1);
+  }
+}
+
+function drawBlock(context, x, y, colorIndex, size, alpha) {
+  if (!colorIndex) return;
+  context.globalAlpha = alpha ?? 1;
+  switch (currentSkin) {
+    case 'neon':
+      drawBlockNeon(context, x, y, colorIndex, size);
+      break;
+    case 'pastel':
+      drawBlockPastel(context, x, y, colorIndex, size);
+      break;
+    case 'pixel':
+      drawBlockPixel(context, x, y, colorIndex, size);
+      break;
+    default:
+      drawBlockRetro(context, x, y, colorIndex, size);
+      break;
   }
   context.globalAlpha = 1;
 }
@@ -207,6 +322,8 @@ function drawGrid() {
 }
 
 function draw() {
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid();
 
@@ -290,6 +407,7 @@ function init() {
   dropAccum = 0;
   lastTime = performance.now();
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+  applySkin(localStorage.getItem(SKIN_KEY) || 'retro');
   next = randomPiece();
   spawn();
   updateHUD();
@@ -327,5 +445,15 @@ restartBtn.addEventListener('click', init);
 themeToggle.addEventListener('change', () => {
   applyTheme(themeToggle.checked ? 'light' : 'dark');
 });
+if (skinSelect) {
+  skinSelect.addEventListener('change', () => {
+    applySkin(skinSelect.value);
+    // Skin changes need an explicit redraw: the RAF loop is paused while
+    // the pause/game-over overlay is showing, so draw()/drawNext() won't
+    // otherwise run until the game resumes.
+    draw();
+    drawNext();
+  });
+}
 
 init();

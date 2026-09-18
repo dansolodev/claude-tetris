@@ -176,6 +176,24 @@ body {
   transform: translateX(20px);
 }
 
+/* ---- Selector de skin ---- */
+.skin-select select {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Neon skin forces a pure-black canvas background regardless of light/dark theme */
+body.skin-neon #board,
+body.skin-neon #next-canvas {
+  background: #000000;
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
