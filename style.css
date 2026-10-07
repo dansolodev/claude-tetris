@@ -253,6 +253,111 @@ kbd {
   transition: background 0.15s;
 }
 
-#restart-btn:hover {
+#restart-btn:hover,
+#restart-btn:focus {
   background: var(--restart-hover);
+}
+
+/* ---- Menú de pausa ---- */
+.overlay [data-show].hidden {
+  display: none;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 180px;
+}
+
+.menu-btn {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.menu-btn:hover,
+.menu-btn:focus,
+.step-btn:hover,
+.step-btn:focus-visible {
+  background: var(--restart-bg);
+  color: var(--restart-text);
+  border-color: var(--restart-bg);
+  outline: none;
+}
+
+.menu-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 200px;
+}
+
+.menu-controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-controls li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--controls-text);
+}
+
+.menu-controls li span {
+  display: flex;
+  gap: 4px;
+}
+
+.level-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stepper .value {
+  min-width: 2ch;
+  text-align: center;
+}
+
+.step-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.step-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--label-color);
 }

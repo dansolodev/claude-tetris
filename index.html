@@ -46,17 +46,45 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
       </aside>
     </div>
 
     <div id="overlay" class="overlay hidden">
-      <div class="overlay-box">
+      <div class="overlay-box" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+
+        <nav class="menu" data-show="pause">
+          <button class="menu-btn" id="resume-btn">Reanudar</button>
+          <button class="menu-btn" id="pause-restart-btn">Reiniciar</button>
+          <button class="menu-btn" id="controls-btn">Ver controles</button>
+        </nav>
+
+        <div class="menu-controls" data-show="controls">
+          <ul>
+            <li><span><kbd>←</kbd><kbd>→</kbd></span> mover</li>
+            <li><span><kbd>↑</kbd><kbd>X</kbd></span> rotar</li>
+            <li><span><kbd>↓</kbd></span> bajar</li>
+            <li><span><kbd>Space</kbd></span> caída</li>
+            <li><span><kbd>P</kbd><kbd>Esc</kbd></span> pausa</li>
+          </ul>
+          <button class="menu-btn" id="controls-back-btn">Volver</button>
+        </div>
+
+        <div class="level-picker" data-show="pause gameover">
+          <span class="label">NIVEL INICIAL</span>
+          <div class="stepper">
+            <button class="step-btn" id="level-down" aria-label="Bajar nivel inicial">−</button>
+            <span class="value" id="start-level" aria-live="polite">1</span>
+            <button class="step-btn" id="level-up" aria-label="Subir nivel inicial">+</button>
+          </div>
+          <span class="hint" data-show="pause">Se aplica en la próxima partida</span>
+        </div>
+
+        <button id="restart-btn" data-show="gameover">Reiniciar</button>
       </div>
     </div>
   </div>
