@@ -26,6 +26,9 @@
   --grid-line: #22222e;
   --block-highlight: rgba(255, 255, 255, 0.12);
   --block-border: transparent;
+  --record-color: #ffd54f;
+  --record-glow: rgba(255, 213, 79, 0.5);
+  --record-bg: rgba(255, 213, 79, 0.12);
 }
 
 body.light {
@@ -50,6 +53,9 @@ body.light {
   --grid-line: #d8d8e4;
   --block-highlight: rgba(0, 0, 0, 0.10);
   --block-border: rgba(20, 20, 30, 0.18);
+  --record-color: #c77700;
+  --record-glow: rgba(199, 119, 0, 0.3);
+  --record-bg: rgba(199, 119, 0, 0.12);
 }
 
 body {
@@ -380,4 +386,119 @@ kbd {
 .hint {
   font-size: 11px;
   color: var(--label-color);
+}
+
+/* ---- Récords ---- */
+.value.record {
+  color: var(--record-color);
+  text-shadow: 0 0 12px var(--record-glow);
+}
+
+.new-record {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--record-color);
+  text-shadow: 0 0 12px var(--record-glow);
+  animation: record-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes record-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.hidden {
+  display: none !important;
+}
+
+.name-form {
+  display: flex;
+  gap: 6px;
+}
+
+.name-form input {
+  width: 150px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  outline: none;
+}
+
+.name-form input:focus {
+  border-color: var(--value-color);
+}
+
+.name-form button {
+  background: var(--record-color);
+  color: var(--restart-text);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.highscores {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.highscores ol {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.highscores li {
+  display: flex;
+  gap: 8px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  color: var(--controls-text);
+}
+
+.highscores li .rank { width: 18px; text-align: right; color: var(--label-color); }
+.highscores li .name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.highscores li .pts { color: var(--value-color); font-weight: 700; }
+
+.highscores li.highlight {
+  background: var(--record-bg);
+  color: var(--record-color);
+  font-weight: 700;
+}
+
+.highscores li.highlight .pts,
+.highscores li.highlight .rank {
+  color: var(--record-color);
+}
+
+.highscores-empty {
+  font-size: 12px;
+  color: var(--controls-text);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--label-color);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  color: var(--overlay-title-color);
 }

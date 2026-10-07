@@ -45,21 +45,32 @@ const levelDownBtn = document.getElementById('level-down');
 const levelUpBtn = document.getElementById('level-up');
 const startLevelEl = document.getElementById('start-level');
 const themeToggle = document.getElementById('theme-toggle');
+const newRecordEl = document.getElementById('new-record');
+const nameForm = document.getElementById('name-form');
+const nameInput = document.getElementById('name-input');
+const highScoresList = document.getElementById('highscores-list');
+const highScoresEmpty = document.getElementById('highscores-empty');
+const resetScoresBtn = document.getElementById('reset-scores-btn');
 
 const THEME_KEY = 'tetris-theme';
 const SKIN_KEY = 'tetris-skin';
 const skinSelect = document.getElementById('skin-select');
 const START_LEVEL_KEY = 'tetris-start-level';
+const HIGHSCORES_KEY = 'tetris-highscores';
+const MAX_HIGHSCORES = 5;
+const DEFAULT_NAME = 'ANÓNIMO';
 const themeVars = { gridLine: '#22222e', blockHighlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent' };
 
 let skin;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let startLevel = clampLevel(parseInt(localStorage.getItem(START_LEVEL_KEY), 10) || 1);
-// 'none' | 'pause' | 'controls' | 'gameover'
-let overlayMode = 'none';
+// 'start' | 'none' | 'pause' | 'controls' | 'gameover'
+let overlayMode = 'start';
 // Teclas pulsadas mientras el menú estaba abierto: se ignoran hasta soltarlas
 // para que no muevan la pieza al reanudar.
 const blockedKeys = new Set();
+let highScores = loadHighScores();
+let pendingRecord = false; // la partida terminada entra en el top y aún no se ha guardado
 
 function clampLevel(n) {
   return Math.min(MAX_START_LEVEL, Math.max(1, n));
@@ -77,6 +88,71 @@ function applyTheme(theme) {
   themeVars.blockBorder = styles.getPropertyValue('--block-border').trim();
   themeToggle.checked = theme === 'light';
   localStorage.setItem(THEME_KEY, theme);
+}
+
+function loadHighScores() {
+  try {
+    const data = JSON.parse(localStorage.getItem(HIGHSCORES_KEY));
+    return Array.isArray(data) ? data.slice(0, MAX_HIGHSCORES) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHighScores() {
+  try {
+    localStorage.setItem(HIGHSCORES_KEY, JSON.stringify(highScores));
+  } catch {
+    // almacenamiento no disponible: los récords solo viven en memoria
+  }
+}
+
+function qualifiesForTop(pts) {
+  if (pts <= 0) return false;
+  return highScores.length < MAX_HIGHSCORES || pts > highScores[highScores.length - 1].score;
+}
+
+// Inserta el récord tras los que tengan igual puntuación y devuelve su posición.
+function addHighScore(name, pts) {
+  let idx = highScores.findIndex(e => pts > e.score);
+  if (idx === -1) idx = highScores.length;
+  highScores.splice(idx, 0, { name, score: pts, level });
+  highScores = highScores.slice(0, MAX_HIGHSCORES);
+  saveHighScores();
+  return idx;
+}
+
+function renderHighScores(highlightIdx = -1) {
+  highScoresList.replaceChildren(...highScores.map((entry, i) => {
+    const li = document.createElement('li');
+    if (i === highlightIdx) li.classList.add('highlight');
+    for (const [cls, text] of [['rank', `${i + 1}.`], ['name', entry.name], ['pts', entry.score.toLocaleString()]]) {
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = text;
+      li.appendChild(span);
+    }
+    return li;
+  }));
+  highScoresEmpty.classList.toggle('hidden', highScores.length > 0);
+  resetScoresBtn.classList.toggle('hidden', highScores.length === 0);
+}
+
+function commitPendingRecord() {
+  if (!pendingRecord) return -1;
+  pendingRecord = false;
+  nameForm.classList.add('hidden');
+  return addHighScore(nameInput.value.trim() || DEFAULT_NAME, score);
+}
+
+function showRecordPrompt() {
+  pendingRecord = qualifiesForTop(score);
+  newRecordEl.classList.toggle('hidden', !pendingRecord);
+  nameForm.classList.toggle('hidden', !pendingRecord);
+  if (pendingRecord) {
+    nameInput.value = '';
+    nameInput.focus();
+  }
 }
 
 function createBoard() {
@@ -189,6 +265,7 @@ function spawn() {
 
 function updateHUD() {
   scoreEl.textContent = score.toLocaleString();
+  scoreEl.classList.toggle('record', qualifiesForTop(score));
   linesEl.textContent = lines;
   levelEl.textContent = level;
 }
@@ -351,7 +428,11 @@ function showOverlay(mode) {
   overlay.classList.toggle('hidden', mode === 'none');
   for (const el of overlay.querySelectorAll('[data-show]'))
     el.classList.toggle('hidden', !el.dataset.show.split(' ').includes(mode));
-  if (mode === 'pause') {
+  if (mode === 'start') {
+    overlayTitle.textContent = 'TETRIS';
+    overlayScore.textContent = '';
+    restartBtn.textContent = 'Jugar';
+  } else if (mode === 'pause') {
     overlayTitle.textContent = 'PAUSA';
     overlayScore.textContent = '';
   } else if (mode === 'controls') {
@@ -360,8 +441,9 @@ function showOverlay(mode) {
   } else if (mode === 'gameover') {
     overlayTitle.textContent = 'GAME OVER';
     overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+    restartBtn.textContent = 'Reiniciar';
   }
-  const focusTarget = { pause: resumeBtn, controls: controlsBackBtn, gameover: restartBtn }[mode];
+  const focusTarget = { start: restartBtn, pause: resumeBtn, controls: controlsBackBtn, gameover: restartBtn }[mode];
   if (focusTarget) focusTarget.focus();
   else if (document.activeElement && overlay.contains(document.activeElement)) document.activeElement.blur();
 }
@@ -382,6 +464,8 @@ function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   showOverlay('gameover');
+  renderHighScores();
+  showRecordPrompt();
 }
 
 function pause() {
@@ -404,7 +488,7 @@ function handleMenuKey(e) {
   const isToggle = e.code === 'KeyP' || e.code === 'Escape';
   if (isToggle && !e.repeat) {
     if (overlayMode === 'controls' && e.code === 'Escape') showOverlay('pause');
-    else if (overlayMode !== 'gameover') resume();
+    else if (paused) resume();
     e.preventDefault();
     return;
   }
@@ -443,6 +527,7 @@ function loop(ts) {
 }
 
 function init() {
+  commitPendingRecord();
   board = createBoard();
   score = 0;
   lines = 0;
@@ -452,8 +537,6 @@ function init() {
   dropInterval = speedFor(level);
   dropAccum = 0;
   lastTime = performance.now();
-  applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
-  applySkin(localStorage.getItem(SKIN_KEY) || 'retro');
   next = randomPiece();
   spawn();
   updateHUD();
@@ -462,7 +545,16 @@ function init() {
   animId = requestAnimationFrame(loop);
 }
 
+// Pantalla de inicio: tablero vacío y overlay con los récords.
+function showStartScreen() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  showOverlay('start');
+  renderHighScores();
+}
+
 document.addEventListener('keydown', e => {
+  if (e.target === nameInput) return; // escribiendo el nombre del récord
   if (overlayMode !== 'none') {
     blockedKeys.add(e.code);
     handleMenuKey(e);
@@ -502,15 +594,31 @@ controlsBtn.addEventListener('click', () => showOverlay('controls'));
 controlsBackBtn.addEventListener('click', () => showOverlay('pause'));
 levelDownBtn.addEventListener('click', () => changeStartLevel(-1));
 levelUpBtn.addEventListener('click', () => changeStartLevel(1));
+nameForm.addEventListener('submit', e => {
+  e.preventDefault();
+  renderHighScores(commitPendingRecord());
+  newRecordEl.classList.add('hidden');
+  restartBtn.focus();
+});
+resetScoresBtn.addEventListener('click', () => {
+  if (!confirm('¿Borrar todos los récords?')) return;
+  highScores = [];
+  saveHighScores();
+  renderHighScores();
+  if (gameOver) showRecordPrompt();
+});
 themeToggle.addEventListener('change', () => {
   applyTheme(themeToggle.checked ? 'light' : 'dark');
   if (next) drawNext();
 });
 skinSelect.addEventListener('change', () => {
   applySkin(skinSelect.value);
-  if (paused || gameOver) draw();
+  if (overlayMode === 'start') showStartScreen();
+  else if (paused || gameOver) draw();
   skinSelect.blur(); // evita que las flechas del juego cambien la skin
 });
 
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+applySkin(localStorage.getItem(SKIN_KEY) || 'retro');
 renderStartLevel();
-init();
+showStartScreen();
