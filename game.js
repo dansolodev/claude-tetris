@@ -4,17 +4,11 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#5c9dff', // J - pale blue
-  '#ffb74d', // L - orange
-  '#9aa5b1', // N - tuerca (gris metálico)
-];
+// Paletas por skin, indexadas por tipo de pieza: I, O, T, S, Z, J, L, N
+const RETRO_COLORS = [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#5c9dff', '#ffb74d', '#9aa5b1'];
+const NEON_COLORS = [null, '#00f0ff', '#fff200', '#d400ff', '#39ff14', '#ff073a', '#2b6bff', '#ff8c00', '#c0c8d0'];
+const PASTEL_COLORS = [null, '#a8e6ef', '#fdf1a6', '#d9b8f0', '#b8e6b8', '#f7b2b7', '#aac8f5', '#fcd0a1', '#d3d8de'];
+const PIXEL_COLORS = [null, '#3cbcfc', '#f8b800', '#9878f8', '#58d854', '#e40058', '#0058f8', '#f87858', '#a4a4a4'];
 
 const PIECES = [
   null,
@@ -44,8 +38,11 @@ const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
 
 const THEME_KEY = 'tetris-theme';
+const SKIN_KEY = 'tetris-skin';
+const skinSelect = document.getElementById('skin-select');
 const themeVars = { gridLine: '#22222e', blockHighlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent' };
 
+let skin;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function applyTheme(theme) {
@@ -172,25 +169,111 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
-function drawBlock(context, x, y, colorIndex, size, alpha) {
-  if (!colorIndex) return;
-  const color = COLORS[colorIndex];
-  context.globalAlpha = alpha ?? 1;
+// ---- Skins: cada una aporta su paleta, fondo/grid opcionales y su función de bloque ----
+
+function roundRectPath(context, x, y, w, h, r) {
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+function drawRetroBlock(context, px, py, size, color) {
   context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
+  context.fillRect(px + 1, py + 1, size - 2, size - 2);
   context.fillStyle = themeVars.blockHighlight;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  context.fillRect(px + 1, py + 1, size - 2, 4);
   if (themeVars.blockBorder !== 'transparent') {
     context.strokeStyle = themeVars.blockBorder;
     context.lineWidth = 1;
-    context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
+    context.strokeRect(px + 1.5, py + 1.5, size - 3, size - 3);
   }
-  context.globalAlpha = 1;
+}
+
+function drawNeonBlock(context, px, py, size, color) {
+  context.shadowColor = color;
+  context.shadowBlur = 14;
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+  context.strokeRect(px + 3, py + 3, size - 6, size - 6);
+  context.shadowBlur = 6;
+  context.fillStyle = color;
+  context.globalAlpha *= 0.35;
+  context.fillRect(px + 5, py + 5, size - 10, size - 10);
+  context.shadowBlur = 0;
+}
+
+function drawPastelBlock(context, px, py, size, color) {
+  const r = size * 0.25;
+  roundRectPath(context, px + 2, py + 2, size - 4, size - 4, r);
+  context.fillStyle = color;
+  context.fill();
+  context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  context.lineWidth = 1.5;
+  context.stroke();
+  // brillo suave arriba a la izquierda
+  roundRectPath(context, px + 6, py + 5, size * 0.4, size * 0.18, size * 0.09);
+  context.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  context.fill();
+}
+
+// Patrón 10×10 de "píxeles": 1 = luz, 2 = sombra
+const PIXEL_PATTERN = [
+  '1111111112',
+  '1100000022',
+  '1000000002',
+  '1001100002',
+  '1001000002',
+  '1000000002',
+  '1000000202',
+  '1000002202',
+  '1000000002',
+  '2222222222',
+];
+
+function drawPixelBlock(context, px, py, size, color) {
+  const u = size / 10;
+  context.fillStyle = color;
+  context.fillRect(px, py, size, size);
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      const v = PIXEL_PATTERN[r][c];
+      if (v === '0') continue;
+      context.fillStyle = v === '1' ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.35)';
+      context.fillRect(Math.floor(px + c * u), Math.floor(py + r * u), Math.ceil(u), Math.ceil(u));
+    }
+  }
+}
+
+const SKINS = {
+  retro:  { colors: RETRO_COLORS,  drawBlock: drawRetroBlock },
+  neon:   { colors: NEON_COLORS,   drawBlock: drawNeonBlock,   gridLine: '#0d0d1a' },
+  pastel: { colors: PASTEL_COLORS, drawBlock: drawPastelBlock },
+  pixel:  { colors: PIXEL_COLORS,  drawBlock: drawPixelBlock },
+};
+
+function applySkin(name) {
+  if (!SKINS[name]) name = 'retro';
+  skin = SKINS[name];
+  document.body.dataset.skin = name;
+  skinSelect.value = name;
+  localStorage.setItem(SKIN_KEY, name);
+  if (next) drawNext();
+}
+
+function drawBlock(context, x, y, colorIndex, size, alpha) {
+  if (!colorIndex) return;
+  context.save();
+  context.globalAlpha = alpha ?? 1;
+  skin.drawBlock(context, x * size, y * size, size, skin.colors[colorIndex]);
+  context.restore();
 }
 
 function drawGrid() {
-  ctx.strokeStyle = themeVars.gridLine;
+  ctx.strokeStyle = skin.gridLine || themeVars.gridLine;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -290,6 +373,7 @@ function init() {
   dropAccum = 0;
   lastTime = performance.now();
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+  applySkin(localStorage.getItem(SKIN_KEY) || 'retro');
   next = randomPiece();
   spawn();
   updateHUD();
@@ -326,6 +410,12 @@ document.addEventListener('keydown', e => {
 restartBtn.addEventListener('click', init);
 themeToggle.addEventListener('change', () => {
   applyTheme(themeToggle.checked ? 'light' : 'dark');
+  if (next) drawNext();
+});
+skinSelect.addEventListener('change', () => {
+  applySkin(skinSelect.value);
+  if (paused || gameOver) draw();
+  skinSelect.blur(); // evita que las flechas del juego cambien la skin
 });
 
 init();
