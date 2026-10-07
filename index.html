@@ -22,6 +22,16 @@
         </div>
 
         <div class="panel-section">
+          <label class="label" for="skin-select">SKIN</label>
+          <select id="skin-select" class="skin-select">
+            <option value="retro">Retro</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel art</option>
+          </select>
+        </div>
+
+        <div class="panel-section">
           <span class="label">SCORE</span>
           <span class="value" id="score">0</span>
         </div>
@@ -46,17 +56,57 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
       </aside>
     </div>
 
-    <div id="overlay" class="overlay hidden">
-      <div class="overlay-box">
-        <p id="overlay-title">GAME OVER</p>
+    <div id="overlay" class="overlay">
+      <div class="overlay-box" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+        <p id="overlay-title">TETRIS</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+        <p id="new-record" class="new-record hidden" data-show="gameover">★ ¡NUEVO RÉCORD! ★</p>
+        <form id="name-form" class="name-form hidden" data-show="gameover">
+          <input id="name-input" type="text" maxlength="12" placeholder="Tu nombre" autocomplete="off" aria-label="Nombre del jugador" />
+          <button type="submit">Guardar</button>
+        </form>
+
+        <nav class="menu" data-show="pause">
+          <button class="menu-btn" id="resume-btn">Reanudar</button>
+          <button class="menu-btn" id="pause-restart-btn">Reiniciar</button>
+          <button class="menu-btn" id="controls-btn">Ver controles</button>
+        </nav>
+
+        <div class="menu-controls" data-show="controls">
+          <ul>
+            <li><span><kbd>←</kbd><kbd>→</kbd></span> mover</li>
+            <li><span><kbd>↑</kbd><kbd>X</kbd></span> rotar</li>
+            <li><span><kbd>↓</kbd></span> bajar</li>
+            <li><span><kbd>Space</kbd></span> caída</li>
+            <li><span><kbd>P</kbd><kbd>Esc</kbd></span> pausa</li>
+          </ul>
+          <button class="menu-btn" id="controls-back-btn">Volver</button>
+        </div>
+
+        <div class="highscores" data-show="start gameover">
+          <span class="label">TOP 5</span>
+          <ol id="highscores-list"></ol>
+          <p id="highscores-empty" class="highscores-empty">Sin récords todavía</p>
+          <button id="reset-scores-btn" class="link-btn" type="button">Borrar récords</button>
+        </div>
+
+        <div class="level-picker" data-show="start pause gameover">
+          <span class="label">NIVEL INICIAL</span>
+          <div class="stepper">
+            <button class="step-btn" id="level-down" aria-label="Bajar nivel inicial">−</button>
+            <span class="value" id="start-level" aria-live="polite">1</span>
+            <button class="step-btn" id="level-up" aria-label="Subir nivel inicial">+</button>
+          </div>
+          <span class="hint" data-show="pause">Se aplica en la próxima partida</span>
+        </div>
+
+        <button id="restart-btn" data-show="start gameover">Jugar</button>
       </div>
     </div>
   </div>
