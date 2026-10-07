@@ -176,6 +176,26 @@ body {
   transform: translateX(20px);
 }
 
+/* ---- Selector de skin ---- */
+.skin-select {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Neon: fondo negro en los canvas sin importar el modo claro/oscuro */
+body[data-skin="neon"] #board,
+body[data-skin="neon"] #next-canvas {
+  background: #000;
+  border-color: #1f1f3a;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
